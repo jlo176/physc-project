@@ -1,6 +1,12 @@
 Web VPython 3.2
 
-scene.camera.pos = vec(10, 5, 15)
+scene.camera.pos = vec(15, 5, 20)
+
+launched = False
+drag = False
+slop = 5
+
+button(text = "launch", pos = scene.title_anchor, bind = launch)
 
 t = 0
 dt = 0.01
@@ -14,13 +20,37 @@ rodAcc = vec(0, g, 0)
 len = 3;
 baton = cylinder(pos = rodPos, axis = len * norm(rodVel), color=color.red, radius = .5)
 
+def launch():
+    global launched
+    launched = True
+    
+def down():
+    global drag
+    print("its not dragging time!")
+    if (mag(baton.pos - scene.mouse.pos) < slop and launched == False):
+        drag = True
+        print("its dragging time!")
+        
+def move():
+    if drag:
+        arrow(pos = baton.pos, axis = scene.mouse.pos)
+        print("its moving time!")
+        
+def up():
+    global drag
+    drag = False
+
 while rodPos.y >= 0:
     rate(1 / dt)
     
-    rodVel += rodAcc * dt
-    rodPos += rodVel * dt
+    scene.bind("mousedown", down)
+    scene.bind("mousemove", move)
     
-    baton.pos = rodPos
-    baton.axis = len * norm(rodVel)
+    if launched:
+        rodVel += rodAcc * dt
+        rodPos += rodVel * dt
     
-    t += dt
+        baton.pos = rodPos
+        baton.axis = len * norm(rodVel)
+    
+        t += dt
