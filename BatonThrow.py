@@ -23,6 +23,11 @@ b2 = sphere(pos=pos + (L/2)*ax, radius=0.22, color=color.white)
  
 com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
+t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
+t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
+
+r1 = m2 * L / (m1 + m2)
+r2 = m1 * L / (m1 + m2)
  
 scene.append_to_caption("speed=12 angle=50 w=4 L=3\nyellow = COM path\n")
 
@@ -44,17 +49,21 @@ def update_m2(s):
     m2 = s.value
     m2_text.text = " {:.2f} kg".format(s.value)
 
-launched = False
-launch_btn = button(text = "launch", pos = scene.title_anchor, bind = launch)
+running = False
+run_btn = button(text = "Run", pos = scene.title_anchor, bind = run)
 
-def launch():
-    global launched
-    launched = True
+def run():
+    global running, run_btn
+    running = not running
+    if running: 
+        run_btn.text = "Pause"
+    else:
+        run_btn.text = "Run"
 
 reset_btn = button(bind=reset_action, text="Reset Simulation", pos=scene.title_anchor)
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, launched
+    global vel, pos, th, t, v, b, t_b1, t_b2, launched
     t = 0
 
     rad = angle * pi / 180
@@ -64,23 +73,31 @@ def reset_action(btn):
     v = True
 
     ax = vec(cos(th), sin(th), 0)
-    rod.pos = pos - (L/2)*ax
-    rod.axis = L*ax
-    b1.pos = pos - (L/2)*ax
+    r1 = m2 * L / (m1 + m2)
+    r2 = m1 * L / (m1 + m2)
+    b1.pos = pos - r1 * ax
     b1.radius = m1 * 0.8
-    b2.pos = pos + (L/2)*ax
+    b2.pos = pos + r2 * ax
     b2.radius = m2 * 0.8
+    rod.pos = b1.pos
+    rod.axis = b2.pos - b1.pos
     com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
     b.stop()
     b.clear()
     b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
+    t_b1.stop()
+    t_b1.clear()
+    t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
+    t_b2.stop()
+    t_b2.clear()
+    t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
     
-    launched = False
+    running = False
     
 while True:
     rate(1/dt)
 
-    if (not v) or (not launched):
+    if (not v) or (not running):
         continue
 
     vel += vec(0, g, 0) * dt
@@ -88,10 +105,12 @@ while True:
     th += w * dt
 
     ax = vec(cos(th), sin(th), 0)
-    rod.pos = pos - (L/2)*ax
-    rod.axis = L*ax
-    b1.pos = pos - (L/2)*ax
-    b2.pos = pos + (L/2)*ax
+    r1 = m2 * L / (m1 + m2)
+    r2 = m1 * L / (m1 + m2)
+    b1.pos = pos - r1 * ax
+    b2.pos = pos + r2 * ax
+    rod.pos = b1.pos
+    rod.axis = b2.pos - b1.pos
     com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
 
     t += dt
