@@ -23,8 +23,8 @@ b2 = sphere(pos=pos + (L/2)*ax, radius=0.22, color=color.white)
  
 com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
-t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
-t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
+t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
+t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
 
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
@@ -43,6 +43,12 @@ scene.append_to_caption("\n\n Starting speed ")
 speed_slider = slider(min=1.0, max=20.0, value=10, step=1, bind=update_speed)
 speed_text = wtext(text=" 10 m/s")
 
+scene.append_to_caption("\n\n Starting angle ")
+angle = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
+angle_text = wtext(text=" 45 degrees")
+
+
+
 def update_m1(s):
     global m1
     m1 = s.value
@@ -57,6 +63,11 @@ def update_speed(s):
     global speed
     speed = s.value
     speed_text.text = " {:.2f} m/s".format(s.value)
+    
+def update_angle(s):
+    global angle
+    angle = s.value
+    angle_text.text = " {:.2f} degrees".format(s.value)
 
 
 
