@@ -63,7 +63,7 @@ def run():
 reset_btn = button(bind=reset_action, text="Reset Simulation", pos=scene.title_anchor)
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, t_b1, t_b2, launched
+    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn
     t = 0
 
     rad = angle * pi / 180
@@ -93,6 +93,7 @@ def reset_action(btn):
     t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
     
     running = False
+    run_btn.text = "Run"
     
 while True:
     rate(1/dt)
