@@ -13,7 +13,7 @@ m1 = 0.3; m2 = 0.3
 rad = angle * pi / 180
 vel = speed * vec(cos(rad), sin(rad), 0)
 pos = vec(0, 0.01, 0)
-th = 0
+th = 0 
 v = True
  
 ax = vec(cos(th), sin(th), 0)
@@ -47,6 +47,9 @@ scene.append_to_caption("\n\n Starting angle ")
 angle_slider = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
 angle_text = wtext(text=" 45 degrees")
 
+scene.append_to_caption("\n\n Starting axis of orientation ")
+th_slider = slider(min=0.0, max=180.0, value=0, step=1, bind=update_th)
+th_text = wtext(text=" 0 degrees")
 
 
 def update_m1(s):
@@ -68,6 +71,11 @@ def update_angle(s):
     global angle
     angle = s.value
     angle_text.text = " {:.2f} degrees".format(s.value)
+    
+def update_th(s):
+    global th
+    th = s.value * pi / 180
+    th_text.text = " {:.2f} degrees".format(s.value)
 
 
 
@@ -91,7 +99,6 @@ def reset_action(btn):
     rad = angle * pi / 180
     vel = speed * vec(cos(rad), sin(rad), 0)
     pos = vec(0, 0.01, 0)
-    th = 0
     v = True
 
     ax = vec(cos(th), sin(th), 0)
