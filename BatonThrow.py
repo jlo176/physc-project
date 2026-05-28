@@ -7,7 +7,7 @@ scene.background = color.black
 scene.camera.pos = vec(8, 5, 20)
 scene.camera.axis = vec(0, 0, -20)
 g = -9.81; dt = 0.005; t = 0
-speed = 12; angle = 50; L = 3; w = 4
+speed = 12; angle = 45; L = 3; w = 4
 m1 = 0.3; m2 = 0.3
  
 rad = angle * pi / 180
@@ -23,8 +23,8 @@ b2 = sphere(pos=pos + (L/2)*ax, radius=0.22, color=color.white)
  
 com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
-t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
-t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
+t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
+t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
 
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
@@ -44,7 +44,7 @@ speed_slider = slider(min=1.0, max=20.0, value=10, step=1, bind=update_speed)
 speed_text = wtext(text=" 10 m/s")
 
 scene.append_to_caption("\n\n Starting angle ")
-angle = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
+angle_slider = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
 angle_text = wtext(text=" 45 degrees")
 
 
@@ -85,7 +85,7 @@ def run():
 reset_btn = button(bind=reset_action, text="Reset Simulation", pos=scene.title_anchor)
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn
+    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad
     t = 0
 
     rad = angle * pi / 180
