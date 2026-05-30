@@ -23,11 +23,16 @@ b2 = sphere(pos=pos + (L/2)*ax, radius=0.22, color=color.white)
  
 com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
-t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
-t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
+t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
+t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
 
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
+
+# New split code variables
+split = False
+v1 = vec(0,0,0)
+v2 = vec(0,0,0)
  
 scene.append_to_caption("speed=12 angle=50 w=4 L=3\nyellow = COM path\n")
 
@@ -91,14 +96,17 @@ def run():
         run_btn.text = "Run"
 
 reset_btn = button(bind=reset_action, text="Reset Simulation", pos=scene.title_anchor)
+split_btn = button(bind=split_rod, text="Split Rod", pos=scene.title_anchor)
+
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad
+    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad, th_slider, split, v1, v2
     t = 0
 
     rad = angle * pi / 180
     vel = speed * vec(cos(rad), sin(rad), 0)
     pos = vec(0, 0.01, 0)
+    th = th_slider.value * pi / 180    
     v = True
 
     ax = vec(cos(th), sin(th), 0)
@@ -116,13 +124,57 @@ def reset_action(btn):
     b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
     t_b1.stop()
     t_b1.clear()
-    t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
+    t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
     t_b2.stop()
     t_b2.clear()
-    t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
+    t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
     
     running = False
     run_btn.text = "Run"
+    
+    split = False
+    v1 = vec(0,0,0)
+    v2 = vec(0,0,0)
+    rod.visible = True
+    com.visible = True
+    split_btn.disabled = False
+    split_btn.text = "Split Rod"
+    
+    
+def split_rod(btn):
+    global rod, b1, b2, t_b1, t_b2, v
+    
+    #If not running
+    if not v:
+        return
+    
+    #Calculations
+    tang = vec(-sin(th), cos(th), 0)
+    r1 = m2 * L / (m1 + m2) 
+    r2 = m1 * L / (m1 + m2)
+    
+    v1 = vel + (-w * r1) * tang 
+    v2 = vel + (-w * r2) * tang 
+    
+    
+    
+    #Rod trail
+    rod.visible = False
+    b.stop(); b.clear()
+    com.visible = False
+    
+    #New ball trails
+    t_b1.stop(); t_b1.clear()
+    t_b2.stop(); t_b2.clear()
+    t_b1 = attach_trail(b1, color=color.cyan,   radius=0.04, retain=500)
+    t_b2 = attach_trail(b2, color=color.magenta, radius=0.04, retain=500)
+    
+    
+    #Variable update
+    _split = True
+    split_btn.disabled = True
+    split_btn.text = "Rod split"
+    
     
 while True:
     rate(1/dt)
@@ -130,23 +182,32 @@ while True:
     if (not v) or (not running):
         continue
 
-    vel += vec(0, g, 0) * dt
-    pos += vel * dt
-    th += w * dt
+    if split:
+        v1 += vec(0, g, 0) * dt
+        v2 += vec(0, g, 0) * dt
+        b1.pos += _v1 * dt
+        b2.pos += _v2 * dt
+        com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        t += dt
+        if b1.pos.y <= 0 or b2.pos.y <= 0:
+            v = False
+    else:
+        vel += vec(0, g, 0) * dt
+        pos += vel * dt
+        th  += w * dt
 
-    ax = vec(cos(th), sin(th), 0)
-    r1 = m2 * L / (m1 + m2)
-    r2 = m1 * L / (m1 + m2)
-    b1.pos = pos - r1 * ax
-    b2.pos = pos + r2 * ax
-    rod.pos = b1.pos
-    rod.axis = b2.pos - b1.pos
-    com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        ax = vec(cos(th), sin(th), 0)
+        r1 = m2 * L / (m1 + m2)
+        r2 = m1 * L / (m1 + m2)
+        b1.pos = pos - r1 * ax
+        b2.pos = pos + r2 * ax
+        rod.pos  = b1.pos
+        rod.axis = b2.pos - b1.pos
+        com.pos  = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        t += dt
 
-    t += dt
-
-    if pos.y <= 0:
-        v = False
+        if pos.y <= 0:
+            v = False
         
 #def down():
 #    global drag
