@@ -142,7 +142,7 @@ def reset_action(btn):
     
     
 def split_rod(btn):
-    global rod, b1, b2, t_b1, t_b2, v
+    global rod, b1, b2, t_b1, t_b2, v, v1, v2, split
     
     #If not running
     if not v:
@@ -154,7 +154,7 @@ def split_rod(btn):
     r2 = m1 * L / (m1 + m2)
     
     v1 = vel + (-w * r1) * tang 
-    v2 = vel + (-w * r2) * tang 
+    v2 = vel + (w * r2) * tang 
     
     
     
@@ -176,6 +176,8 @@ def split_rod(btn):
     split_btn.text = "Rod split"
     
     
+
+    
 while True:
     rate(1/dt)
 
@@ -185,9 +187,8 @@ while True:
     if split:
         v1 += vec(0, g, 0) * dt
         v2 += vec(0, g, 0) * dt
-        b1.pos += _v1 * dt
-        b2.pos += _v2 * dt
-        com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        b1.pos += v1 * dt
+        b2.pos += v2 * dt
         t += dt
         if b1.pos.y <= 0 or b2.pos.y <= 0:
             v = False
