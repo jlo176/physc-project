@@ -56,6 +56,10 @@ scene.append_to_caption("\n\n Starting axis of orientation ")
 th_slider = slider(min=0.0, max=180.0, value=0, step=1, bind=update_th)
 th_text = wtext(text=" 0 degrees")
 
+scene.append_to_caption("\n\n Rod Length ")
+L_slider = slider(min=0.0, max=10.0, value=3.0, step=1, bind=update_length)
+L_text = wtext(text=" 3.0 m")
+
 
 def update_m1(s):
     global m1
@@ -82,6 +86,10 @@ def update_th(s):
     th = s.value * pi / 180
     th_text.text = " {:.2f} degrees".format(s.value)
 
+def update_length(s):
+    global L
+    L = s.value
+    L_text.text = " {:.2f} m".format(s.value)
 
 
 running = False
@@ -171,7 +179,7 @@ def split_rod(btn):
     
     
     #Variable update
-    _split = True
+    split = True
     split_btn.disabled = True
     split_btn.text = "Rod split"
     
