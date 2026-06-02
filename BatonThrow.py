@@ -7,13 +7,13 @@ scene.background = color.black
 scene.camera.pos = vec(8, 5, 20)
 scene.camera.axis = vec(0, 0, -20)
 g = -9.81; dt = 0.005; t = 0
-speed = 12; angle = 50; L = 3; w = 4
+speed = 12; angle = 45; L = 3; w = 4
 m1 = 0.3; m2 = 0.3
  
 rad = angle * pi / 180
 vel = speed * vec(cos(rad), sin(rad), 0)
 pos = vec(0, 0.01, 0)
-th = 0
+th = 0 
 v = True
  
 ax = vec(cos(th), sin(th), 0)
@@ -23,21 +23,47 @@ b2 = sphere(pos=pos + (L/2)*ax, radius=0.22, color=color.white)
  
 com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
-t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
-t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
+t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
+t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
 
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
- 
-scene.append_to_caption("speed=12 angle=50 w=4 L=3\nyellow = COM path\n")
 
-scene.append_to_caption("\n\nBall 1 mass: ")
+g1 = graph(xtitle = "time (s)", ytitle = "speed (units/s)")
+gc1 = gcurve(color = color.yellow, label = "COM speed")
+gc2 = gcurve(color = color.black, label = "Mass 2 speed")
+gc3 = gcurve(color = color.red, label = "Mass 1 speed")
+
+# New split code variables
+split = False
+v1 = vec(0,0,0)
+v2 = vec(0,0,0)
+ 
+scene.append_to_caption("speed=" + speed + " angle=" + angle + " w=" + w + " L=" + L + "\nyellow = COM path, red = end path\n")
+
+scene.append_to_caption("\n\nBall 1 mass: ") 
 m1_slider = slider(min=0.05, max=1.0, value=0.3, step=0.05, bind=update_m1)
 m1_text = wtext(text=" 0.30 kg")
 
 scene.append_to_caption("\n\nBall 2 mass: ")
 m2_slider = slider(min=0.05, max=1.0, value=0.3, step=0.05, bind=update_m2)
 m2_text = wtext(text=" 0.30 kg")
+
+scene.append_to_caption("\n\n Starting speed ")
+speed_slider = slider(min=1.0, max=20.0, value=10, step=1, bind=update_speed)
+speed_text = wtext(text=" 10 m/s")
+
+scene.append_to_caption("\n\n Starting angle ")
+angle_slider = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
+angle_text = wtext(text=" 45 degrees")
+
+scene.append_to_caption("\n\n Starting axis of orientation ")
+th_slider = slider(min=0.0, max=180.0, value=0, step=1, bind=update_th)
+th_text = wtext(text=" 0 degrees")
+
+scene.append_to_caption("\n\n Rod Length ")
+L_slider = slider(min=0.0, max=10.0, value=3.0, step=1, bind=update_length)
+L_text = wtext(text=" 3.0 m")
 
 def update_m1(s):
     global m1
@@ -48,6 +74,26 @@ def update_m2(s):
     global m2
     m2 = s.value
     m2_text.text = " {:.2f} kg".format(s.value)
+    
+def update_speed(s):
+    global speed
+    speed = s.value
+    speed_text.text = " {:.2f} m/s".format(s.value)
+    
+def update_angle(s):
+    global angle
+    angle = s.value
+    angle_text.text = " {:.2f} degrees".format(s.value)
+    
+def update_th(s):
+    global th
+    th = s.value * pi / 180
+    th_text.text = " {:.2f} degrees".format(s.value)
+    
+def update_length(s):
+    global L
+    L = s.value
+    L_text.text = " {:.2f} m".format(s.value)
 
 running = False
 run_btn = button(text = "Run", pos = scene.title_anchor, bind = run)
@@ -61,15 +107,17 @@ def run():
         run_btn.text = "Run"
 
 reset_btn = button(bind=reset_action, text="Reset Simulation", pos=scene.title_anchor)
+split_btn = button(bind=split_rod, text="Split Rod", pos=scene.title_anchor)
+
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn
+    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad, th_slider, split, v1, v2
     t = 0
 
     rad = angle * pi / 180
     vel = speed * vec(cos(rad), sin(rad), 0)
     pos = vec(0, 0.01, 0)
-    th = 0
+    th = th_slider.value * pi / 180    
     v = True
 
     ax = vec(cos(th), sin(th), 0)
@@ -87,13 +135,61 @@ def reset_action(btn):
     b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
     t_b1.stop()
     t_b1.clear()
-    t_b1 = attach_trail(b1, color=color.yellow, radius=0.035, retain=500)
+    t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
     t_b2.stop()
     t_b2.clear()
-    t_b2 = attach_trail(b2, color=color.yellow, radius=0.035, retain=500)
+    t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
+    
+    #clear graphs
+    gc1.data = []
+    gc2.data = []
+    gc3.data = []
     
     running = False
     run_btn.text = "Run"
+    
+    split = False
+    v1 = vec(0,0,0)
+    v2 = vec(0,0,0)
+    rod.visible = True
+    com.visible = True
+    split_btn.disabled = False
+    split_btn.text = "Split Rod"
+    
+    
+def split_rod(btn):
+    global rod, b1, b2, t_b1, t_b2, v, v1, v2, split
+    
+    #If not running
+    if not v:
+        return
+    
+    #Calculations
+    tang = vec(-sin(th), cos(th), 0)
+    r1 = m2 * L / (m1 + m2) 
+    r2 = m1 * L / (m1 + m2)
+    
+    v1 = vel + (-w * r1) * tang 
+    v2 = vel + (w * r2) * tang 
+    
+    
+    
+    #Rod trail
+    rod.visible = False
+    b.stop(); b.clear()
+    com.visible = False
+    
+    #New ball trails
+    t_b1.stop(); t_b1.clear()
+    t_b2.stop(); t_b2.clear()
+    t_b1 = attach_trail(b1, color=color.cyan,   radius=0.04, retain=500)
+    t_b2 = attach_trail(b2, color=color.magenta, radius=0.04, retain=500)
+    
+    #Variable update
+    split = True
+    split_btn.disabled = True
+    split_btn.text = "Rod split"
+
     
 while True:
     rate(1/dt)
@@ -101,23 +197,38 @@ while True:
     if (not v) or (not running):
         continue
 
-    vel += vec(0, g, 0) * dt
-    pos += vel * dt
-    th += w * dt
+    if split:
+        v1 += vec(0, g, 0) * dt
+        v2 += vec(0, g, 0) * dt
+        b1.pos += v1 * dt
+        b2.pos += v2 * dt
+        t += dt
+        gc2.plot(t, mag(v2))
+        gc3.plot(t, mag(v1))
+        if b1.pos.y <= 0 or b2.pos.y <= 0:
+            v = False
+    else:
+        vel += vec(0, g, 0) * dt
+        pos += vel * dt
+        th  += w * dt
 
-    ax = vec(cos(th), sin(th), 0)
-    r1 = m2 * L / (m1 + m2)
-    r2 = m1 * L / (m1 + m2)
-    b1.pos = pos - r1 * ax
-    b2.pos = pos + r2 * ax
-    rod.pos = b1.pos
-    rod.axis = b2.pos - b1.pos
-    com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        ax = vec(cos(th), sin(th), 0)
+        r1 = m2 * L / (m1 + m2)
+        r2 = m1 * L / (m1 + m2)
+        b1.pos = pos - r1 * ax
+        b2.pos = pos + r2 * ax
+        rod.pos  = b1.pos
+        rod.axis = b2.pos - b1.pos
+        com.pos  = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        t += dt
+        
+        gc1.plot(t, mag(vel))
+        tang = vec(-sin(th), cos(th), 0)
+        gc2.plot(t, mag(vel + (w * r2) * tang)) 
+        gc3.plot(t, mag(vel + (-w * r1) * tang))
 
-    t += dt
-
-    if pos.y <= 0:
-        v = False
+        if pos.y <= 0:
+            v = False
         
 #def down():
 #    global drag
