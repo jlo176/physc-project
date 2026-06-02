@@ -30,9 +30,11 @@ r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
 
 # New split code variables
-split = False
+split_both = False
 v1 = vec(0,0,0)
 v2 = vec(0,0,0)
+stop1 = False
+stop2 = False
  
 scene.append_to_caption("speed=12 angle=50 w=4 L=3\nyellow = COM path\n")
 
@@ -108,7 +110,7 @@ split_btn = button(bind=split_rod, text="Split Rod", pos=scene.title_anchor)
 
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad, th_slider, split, v1, v2
+    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2
     t = 0
 
     rad = angle * pi / 180
@@ -140,17 +142,19 @@ def reset_action(btn):
     running = False
     run_btn.text = "Run"
     
-    split = False
+    split_both = False
     v1 = vec(0,0,0)
     v2 = vec(0,0,0)
     rod.visible = True
     com.visible = True
     split_btn.disabled = False
     split_btn.text = "Split Rod"
+    stop1 = False
+    stop2 = False
     
     
 def split_rod(btn):
-    global rod, b1, b2, t_b1, t_b2, v, v1, v2, split
+    global rod, b1, b2, t_b1, t_b2, v, v1, v2, split_both
     
     #If not running
     if not v:
@@ -179,7 +183,7 @@ def split_rod(btn):
     
     
     #Variable update
-    split = True
+    split_both = True
     split_btn.disabled = True
     split_btn.text = "Rod split"
     
@@ -187,19 +191,27 @@ def split_rod(btn):
 
     
 while True:
+    global split_both, stop1, stop2
     rate(1/dt)
 
     if (not v) or (not running):
         continue
 
-    if split:
-        v1 += vec(0, g, 0) * dt
-        v2 += vec(0, g, 0) * dt
-        b1.pos += v1 * dt
-        b2.pos += v2 * dt
+    if split_both:
+        if not stop1:
+            v1 += vec(0, g, 0) * dt
+            b1.pos += v1 * dt
+            if b1.pos.y <= 0:
+                stop1 = True
+        if not stop2:
+            v2 += vec(0, g, 0) * dt
+            b2.pos += v2 * dt
+            if b2.pos.y <= 0:
+                stop2 = True
         t += dt
-        if b1.pos.y <= 0 or b2.pos.y <= 0:
+        if stop1 and stop2:
             v = False
+            
     else:
         vel += vec(0, g, 0) * dt
         pos += vel * dt
@@ -217,6 +229,10 @@ while True:
 
         if pos.y <= 0:
             v = False
+        
+        
+            
+
         
 #def down():
 #    global drag
