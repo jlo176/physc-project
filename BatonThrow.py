@@ -3,9 +3,25 @@ Web VPython 3.2
 # rod projectile sim
 # shows baton flying with COM trail, spins independently
  
-scene.background = color.black
+scene.background = vec(0.53, 0.81, 0.98)
 scene.camera.pos = vec(8, 5, 20)
 scene.camera.axis = vec(0, 0, -20)
+
+grass = box(
+    pos=vec(10, -0.5, 0),
+    size=vec(200, 1.0, 60),
+    texture=textures.wood,     
+    color=vec(0.22, 0.62, 0.18),   
+    opacity=1.0
+)
+ 
+dirt = box(
+    pos=vec(10, -0.08, 0),
+    size=vec(200, 0.16, 60),
+    color=vec(0.38, 0.24, 0.10),
+    opacity=1.0
+)
+
 g = -9.81; dt = 0.005; t = 0
 speed = 12; angle = 45; L = 3; w = 4
 m1 = 0.3; m2 = 0.3
@@ -35,9 +51,11 @@ gc2 = gcurve(color = color.black, label = "Mass 2 speed")
 gc3 = gcurve(color = color.red, label = "Mass 1 speed")
 
 # New split code variables
-split = False
+split_both = False
 v1 = vec(0,0,0)
 v2 = vec(0,0,0)
+stop1 = False
+stop2 = False
  
 scene.append_to_caption("speed=" + speed + " angle=" + angle + " w=" + w + " L=" + L + "\nyellow = COM path, red = end path\n")
 
@@ -111,7 +129,7 @@ split_btn = button(bind=split_rod, text="Split Rod", pos=scene.title_anchor)
 
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad, th_slider, split, v1, v2
+    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2
     t = 0
 
     rad = angle * pi / 180
@@ -140,25 +158,29 @@ def reset_action(btn):
     t_b2.clear()
     t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
     
-    #clear graphs
+    #reset graphs
     gc1.data = []
     gc2.data = []
     gc3.data = []
+    gd1.data = []
+    g1.ymax = None
     
     running = False
     run_btn.text = "Run"
     
-    split = False
+    split_both = False
     v1 = vec(0,0,0)
     v2 = vec(0,0,0)
     rod.visible = True
     com.visible = True
     split_btn.disabled = False
     split_btn.text = "Split Rod"
+    stop1 = False
+    stop2 = False
     
     
 def split_rod(btn):
-    global rod, b1, b2, t_b1, t_b2, v, v1, v2, split
+    global rod, b1, b2, t_b1, t_b2, t, v, v1, v2, split_both
     
     #If not running
     if not v:
@@ -172,8 +194,6 @@ def split_rod(btn):
     v1 = vel + (-w * r1) * tang 
     v2 = vel + (w * r2) * tang 
     
-    
-    
     #Rod trail
     rod.visible = False
     b.stop(); b.clear()
@@ -186,9 +206,17 @@ def split_rod(btn):
     t_b2 = attach_trail(b2, color=color.magenta, radius=0.04, retain=500)
     
     #Variable update
-    split = True
+    split_both = True
     split_btn.disabled = True
     split_btn.text = "Rod split"
+    
+    #split graph indicator
+    g1.select()
+    gd1 = gdots(color = color.black, radius = 1)
+    i = 0
+    while i < g1.ymax + 10:
+        gd1.plot(t, i)
+        i += .8
 
     
 while True:
@@ -197,15 +225,29 @@ while True:
     if (not v) or (not running):
         continue
 
-    if split:
-        v1 += vec(0, g, 0) * dt
-        v2 += vec(0, g, 0) * dt
-        b1.pos += v1 * dt
-        b2.pos += v2 * dt
+    if split_both:
+        if not stop1:
+            v1 += vec(0, g, 0) * dt
+            b1.pos += v1 * dt
+            gc3.plot(t, mag(v1))
+            if b1.pos.y <= 0:
+                stop1 = True
+        if not stop2:
+            v2 += vec(0, g, 0) * dt
+            b2.pos += v2 * dt
+            gc2.plot(t, mag(v2))
+            if b2.pos.y <= 0:
+                stop2 = True
+        if not stop1 and not stop2:
+            vel = ((b1.pos * m1 + b2.pos * m2) / (m1 + m2) - com.pos) / dt
+            com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+            gc1.plot(t, mag(vel))
+            
+#        com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+#        if not stop1 and not stop2:
+#            gc1.plot(
         t += dt
-        gc2.plot(t, mag(v2))
-        gc3.plot(t, mag(v1))
-        if b1.pos.y <= 0 or b2.pos.y <= 0:
+        if stop1 and stop2:
             v = False
     else:
         vel += vec(0, g, 0) * dt
@@ -220,31 +262,14 @@ while True:
         rod.pos  = b1.pos
         rod.axis = b2.pos - b1.pos
         com.pos  = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
-        t += dt
         
         gc1.plot(t, mag(vel))
         tang = vec(-sin(th), cos(th), 0)
         gc2.plot(t, mag(vel + (w * r2) * tang)) 
         gc3.plot(t, mag(vel + (-w * r1) * tang))
+        g1.ymax = max(max(mag(vel + (w * r2) * tang), mag(vel + (-w * r1) * tang)) + 3, g1.ymax)
+        
+        t += dt
 
         if pos.y <= 0:
             v = False
-        
-#def down():
-#    global drag
-#    print("its not dragging time!")
-#    if (mag(velArrow.pos + velArrow.axis - scene.mouse.pos) < slop and launched == False):
-#        drag = True
-#        print("its dragging time!")
-#        
-#def move():
-#    if drag:
-#        velArrow.axis = scene.mouse.pos
-#        rodVel = velArrow.axis
-#        print(rodVel.x)
-#        print(rodVel.y)
-#        print("its moving time!")
-#        
-#def up():
-#    global drag
-#    drag = False
