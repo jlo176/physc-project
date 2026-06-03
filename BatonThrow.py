@@ -3,13 +3,33 @@ Web VPython 3.2
 # rod projectile sim
 # shows baton flying with COM trail, spins independently
  
-scene.background = color.black
+scene.background = vec(0.53, 0.81, 0.98)
 scene.camera.pos = vec(8, 5, 20)
 scene.camera.axis = vec(0, 0, -20)
+
+
+
+grass = box(
+    pos=vec(10, -0.5, 0),
+    size=vec(200, 1.0, 60),
+    texture=textures.wood,     
+    color=vec(0.22, 0.62, 0.18),   
+    opacity=1.0
+)
+ 
+dirt = box(
+    pos=vec(10, -0.08, 0),
+    size=vec(200, 0.16, 60),
+    color=vec(0.38, 0.24, 0.10),
+    opacity=1.0
+)
+
+
+
+
 g = -9.81; dt = 0.005; t = 0
 speed = 12; angle = 45; L = 3; w = 4
 m1 = 0.3; m2 = 0.3
- 
 rad = angle * pi / 180
 vel = speed * vec(cos(rad), sin(rad), 0)
 pos = vec(0, 0.01, 0)
@@ -20,12 +40,10 @@ ax = vec(cos(th), sin(th), 0)
 rod = cylinder(pos=pos - (L/2)*ax, axis=L*ax, radius=0.08, color=color.red)
 b1 = sphere(pos=pos - (L/2)*ax, radius=0.22, color=color.white)
 b2 = sphere(pos=pos + (L/2)*ax, radius=0.22, color=color.white)
- 
 com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
 t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
 t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
-
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
 
