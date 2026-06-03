@@ -28,7 +28,7 @@ dirt = box(
 
 
 g = -9.81; dt = 0.005; t = 0
-speed = 12; angle = 45; L = 3; w = 4
+speed = 12; angle = 45; L = 3; w = 4; I = 0
 m1 = 0.3; m2 = 0.3
 rad = angle * pi / 180
 vel = speed * vec(cos(rad), sin(rad), 0)
@@ -54,7 +54,7 @@ v2 = vec(0,0,0)
 stop1 = False
 stop2 = False
  
-scene.append_to_caption("speed=12 angle=50 w=4 L=3\nyellow = COM path\n")
+scene.append_to_caption("yellow = COM path\n")
 
 scene.append_to_caption("\n\nBall 1 mass: ")
 m1_slider = slider(min=0.05, max=1.0, value=0.3, step=0.05, bind=update_m1)
@@ -83,6 +83,10 @@ th_text = wtext(text=" 0 degrees")
 scene.append_to_caption("\n\n Rod Length ")
 L_slider = slider(min=0.0, max=10.0, value=3.0, step=1, bind=update_length)
 L_text = wtext(text=" 3.0 m")
+
+scene.append_to_caption("\n\n Starting impulse ")
+I_slider = slider(min=0.0, max=50.0, value=0, step=1, bind=update_impulse)
+I_text = wtext(text=" 0 N*s")
 
 
 def update_m1(s):
@@ -119,6 +123,12 @@ def update_length(s):
     global L
     L = s.value
     L_text.text = " {:.2f} m".format(s.value)
+    
+
+def update_impulse(s):
+    global I
+    I = s.value
+    I_text.text = " {:.2f} N*s".format(s.value)
 
 
 running = False
@@ -155,7 +165,7 @@ def reset_action(btn):
     b2.radius = m2 * 0.8
     rod.pos = b1.pos
     rod.axis = b2.pos - b1.pos
-    com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+    com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)                                                                  
     b.stop()
     b.clear()
     b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
@@ -170,13 +180,13 @@ def reset_action(btn):
     run_btn.text = "Run"
     
     split_both = False
-    v1 = vec(0,0,0)
+    v1 = vec(0,0,0)                    
     v2 = vec(0,0,0)
-    rod.visible = True
+    rod.visible = True                                   
     com.visible = True
-    split_btn.disabled = False
+    split_btn.disabled = False                                                                
     split_btn.text = "Split Rod"
-    stop1 = False
+    stop1 = False                                                                             
     stop2 = False
     
     
@@ -192,8 +202,8 @@ def split_rod(btn):
     r1 = m2 * L / (m1 + m2) 
     r2 = m1 * L / (m1 + m2)
     
-    v1 = vel + (-w * r1) * tang 
-    v2 = vel + (w * r2) * tang 
+    v1 = vel + (-w * r1) * tang - (I / m1) * ax
+    v2 = vel + (w * r2) * tang + (I / m2) * ax
     
     
     
