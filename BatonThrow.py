@@ -10,16 +10,16 @@ scene.camera.axis = vec(0, 0, -20)
 
 
 grass = box(
-    pos=vec(10, -0.5, 0),
-    size=vec(200, 1.0, 60),
+    pos=vec(10, -0.08, 0),
+    size=vec(200, 0.16, 60),
     texture=textures.wood,     
     color=vec(0.22, 0.62, 0.18),   
     opacity=1.0
 )
  
 dirt = box(
-    pos=vec(10, -0.08, 0),
-    size=vec(200, 0.16, 60),
+    pos=vec(10, -5, 0),
+    size=vec(200, 9, 60),
     color=vec(0.38, 0.24, 0.10),
     opacity=1.0
 )
@@ -68,6 +68,10 @@ scene.append_to_caption("\n\n Starting speed ")
 speed_slider = slider(min=1.0, max=20.0, value=10, step=1, bind=update_speed)
 speed_text = wtext(text=" 10 m/s")
 
+scene.append_to_caption("\n\n Starting angular speed ")
+w_slider = slider(min=1.0, max=20.0, value=3, step=1, bind=update_angular_speed)
+w_text = wtext(text=" 3.0 m/s")
+
 scene.append_to_caption("\n\n Starting angle ")
 angle_slider = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
 angle_text = wtext(text=" 45 degrees")
@@ -95,6 +99,11 @@ def update_speed(s):
     global speed
     speed = s.value
     speed_text.text = " {:.2f} m/s".format(s.value)
+    
+def update_angular_speed(s):
+    global w
+    w = s.value
+    w_text.text = " {:.2f} m/s".format(s.value)
     
 def update_angle(s):
     global angle
