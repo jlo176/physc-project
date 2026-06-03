@@ -8,16 +8,16 @@ scene.camera.pos = vec(8, 5, 20)
 scene.camera.axis = vec(0, 0, -20)
 
 grass = box(
-    pos=vec(10, -0.5, 0),
-    size=vec(200, 1.0, 60),
+    pos=vec(10, -0.08, 0),
+    size=vec(200, 0.16, 60),
     texture=textures.wood,     
     color=vec(0.22, 0.62, 0.18),   
     opacity=1.0
 )
  
 dirt = box(
-    pos=vec(10, -0.08, 0),
-    size=vec(200, 0.16, 60),
+    pos=vec(10, -5, 0),
+    size=vec(200, 9, 60),
     color=vec(0.38, 0.24, 0.10),
     opacity=1.0
 )
@@ -45,7 +45,7 @@ t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
 
-g1 = graph(xtitle = "time (s)", ytitle = "speed (units/s)")
+g1 = graph(xtitle = "time (s)", ytitle = "speed (m/s)")
 gc1 = gcurve(color = color.yellow, label = "COM speed")
 gc2 = gcurve(color = color.black, label = "Mass 2 speed")
 gc3 = gcurve(color = color.red, label = "Mass 1 speed")
@@ -75,13 +75,17 @@ scene.append_to_caption("\n\n Starting angle ")
 angle_slider = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
 angle_text = wtext(text=" 45 degrees")
 
+scene.append_to_caption("\n\n Starting angular speed ")
+w_slider = slider(min=1.0, max=20.0, value=3, step=1, bind=update_angular_speed)
+w_text = wtext(text=" 3.0 rad/s")
+
 scene.append_to_caption("\n\n Starting axis of orientation ")
 th_slider = slider(min=0.0, max=180.0, value=0, step=1, bind=update_th)
 th_text = wtext(text=" 0 degrees")
 
 scene.append_to_caption("\n\n Rod Length ")
 L_slider = slider(min=0.0, max=10.0, value=3.0, step=1, bind=update_length)
-L_text = wtext(text=" 3.0 m")
+L_text = wtext(text=" 3 m")
 
 def update_m1(s):
     global m1
@@ -96,22 +100,27 @@ def update_m2(s):
 def update_speed(s):
     global speed
     speed = s.value
-    speed_text.text = " {:.2f} m/s".format(s.value)
+    speed_text.text = " {:d} m/s".format(s.value)
     
 def update_angle(s):
     global angle
     angle = s.value
-    angle_text.text = " {:.2f} degrees".format(s.value)
+    angle_text.text = " {:d} degrees".format(s.value)
+    
+def update_angular_speed(s):
+    global w
+    w = s.value
+    w_text.text = " {:d} rad/s".format(s.value)
     
 def update_th(s):
     global th
     th = s.value * pi / 180
-    th_text.text = " {:.2f} degrees".format(s.value)
+    th_text.text = " {:d} degrees".format(s.value)
     
 def update_length(s):
     global L
     L = s.value
-    L_text.text = " {:.2f} m".format(s.value)
+    L_text.text = " {:d} m".format(s.value)
 
 running = False
 run_btn = button(text = "Run", pos = scene.title_anchor, bind = run)
@@ -129,7 +138,7 @@ split_btn = button(bind=split_rod, text="Split Rod", pos=scene.title_anchor)
 
 
 def reset_action(btn):
-    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2
+    global vel, pos, th, t, v, b, t_b1, t_b2, running, run_btn, split_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2
     t = 0
 
     rad = angle * pi / 180
@@ -158,13 +167,6 @@ def reset_action(btn):
     t_b2.clear()
     t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
     
-    #reset graphs
-    gc1.data = []
-    gc2.data = []
-    gc3.data = []
-    gd1.data = []
-    g1.ymax = None
-    
     running = False
     run_btn.text = "Run"
     
@@ -178,6 +180,12 @@ def reset_action(btn):
     stop1 = False
     stop2 = False
     
+    #reset graphs
+    gc1.data = []
+    gc2.data = []
+    gc3.data = []
+    gd1.data = []
+    g1.ymax = None
     
 def split_rod(btn):
     global rod, b1, b2, t_b1, t_b2, t, v, v1, v2, split_both
