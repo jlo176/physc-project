@@ -1,5 +1,5 @@
 Web VPython 3.2
- 
+
 # rod projectile sim
 # shows baton flying with COM trail, spins independently
  
@@ -29,7 +29,7 @@ dirt = box(
 
 g = -9.81; dt = 0.005; t = 0
 speed = 12; angle = 45; L = 3; w = 4; I = 0
-m1 = 0.3; m2 = 0.3
+m1 = 0.3; m2 = 0.3; mr = 0.2          # mr = rod mass
 rad = angle * pi / 180
 vel = speed * vec(cos(rad), sin(rad), 0)
 pos = vec(0, 0.01, 0)
@@ -40,7 +40,19 @@ ax = vec(cos(th), sin(th), 0)
 rod = cylinder(pos=pos - (L/2)*ax, axis=L*ax, radius=0.08, color=color.red)
 b1 = sphere(pos=pos - (L/2)*ax, radius=0.22, color=color.white)
 b2 = sphere(pos=pos + (L/2)*ax, radius=0.22, color=color.white)
-com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
+
+def com_pos():                         # COM with rod mass included
+    mtot = m1 + m2 + mr
+    rod_com = pos                      # rod COM = baton COM (uniform)
+    return (b1.pos*m1 + b2.pos*m2 + rod_com*mr) / mtot
+
+com = sphere(pos=com_pos(), radius=0.10, color=color.yellow, opacity=0.6)
+
+
+
+
+
+
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
 t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
 t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
@@ -63,6 +75,10 @@ m1_text = wtext(text=" 0.30 kg")
 scene.append_to_caption("\n\nBall 2 mass: ")
 m2_slider = slider(min=0.05, max=1.0, value=0.3, step=0.05, bind=update_m2)
 m2_text = wtext(text=" 0.30 kg")
+
+scene.append_to_caption("\n\nRod mass: ")           
+mr_slider = slider(min=0.0, max=2.0, value=0.2, step=0.05, bind=update_mr)
+mr_text = wtext(text=" 0.20 kg")
 
 scene.append_to_caption("\n\n Starting speed ")
 speed_slider = slider(min=1.0, max=20.0, value=10, step=1, bind=update_speed)
@@ -98,6 +114,11 @@ def update_m2(s):
     global m2
     m2 = s.value
     m2_text.text = " {:.2f} kg".format(s.value)
+    
+def update_mr(s):                      
+    global mr
+    mr = s.value
+    mr_text.text = " {:.2f} kg".format(s.value)
     
 def update_speed(s):
     global speed
@@ -202,8 +223,21 @@ def split_rod(btn):
     r1 = m2 * L / (m1 + m2) 
     r2 = m1 * L / (m1 + m2)
     
+    I_total = m1*r1**2 + m2*r2**2 + mr*L**2/12   #Factors in rod masss
+    dw = I * (L/2) / I_total if I_total > 0 else 0
+
+
+    
+    f1 = m1 / (m1 + m2)                           # fraction of ball 1 to both balls
+    f2 = m2 / (m1 + m2)
+    
     v1 = vel + (-w * r1) * tang - (I / m1) * ax
-    v2 = vel + (w * r2) * tang + (I / m2) * ax
+
+    v2 = vel + ( w * r2) * tang + (I / m2) * ax
+
+    v1 += (mr * f1 / m1) * vel
+
+    v2 += (mr * f2 / m2) * vel
     
     
     
@@ -261,7 +295,7 @@ while True:
         b2.pos = pos + r2 * ax
         rod.pos  = b1.pos
         rod.axis = b2.pos - b1.pos
-        com.pos  = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        com.pos  = com_pos()
         t += dt
 
         if pos.y <= 0:
