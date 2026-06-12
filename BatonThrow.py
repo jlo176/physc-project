@@ -28,14 +28,13 @@ m1 = 0.3; m2 = 0.3
  
 rad = angle * pi / 180
 vel = speed * vec(cos(rad), sin(rad), 0)
-pos = vec(0, 0.01, 0)
 th = 0 
 v = True
  
 ax = vec(cos(th), sin(th), 0)
 rod = cylinder(pos=-(L/2)*ax, axis=L*ax, radius=0.08, color=color.red)
-b1 = sphere(pos=-(L/2)*ax, radius=0.22, color=color.white)
-b2 = sphere(pos=(L/2)*ax, radius=0.22, color=color.white)
+b1 = sphere(pos=-(L/2)*ax, radius=.5*sqrt(m1), color=color.white)
+b2 = sphere(pos=(L/2)*ax, radius=.5*sqrt(m2), color=color.white)
 com = sphere(pos=(b1.pos * m1 + b2.pos * m2) / (m1 + m2), radius=0.10, color=color.yellow, opacity=0.6)
 pos = vec(0, max(mag(b1.pos - com.pos), mag(b2.pos - com.pos)), 0)
 b1.pos += pos
@@ -45,6 +44,9 @@ rod.pos += pos
 b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
 t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
 t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
+b.stop()
+t_b1.stop()
+t_b2.stop()
 
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
@@ -54,6 +56,8 @@ gc1 = gcurve(color = color.yellow, label = "COM speed")
 gc2 = gcurve(color = color.black, label = "Mass 2 speed")
 gc3 = gcurve(color = color.red, label = "Mass 1 speed")
 gd1 = gdots(color = color.black, radius = 1)
+
+started = False
 
 # New split code variables
 split_both = False
@@ -93,6 +97,16 @@ L_text = wtext(text=" 3 m")
 scene.append_to_caption("\n\n Starting impulse ")
 I_slider = slider(min=0.0, max=20.0, value=0, step=1, bind=update_impulse)
 I_text = wtext(text=" 0 N*s")
+
+all_sliders = [m1_slider, m2_slider, speed_slider, angle_slider, w_slider, th_slider, L_slider, I_slider]
+
+def disable_sliders():
+    for s in all_sliders:
+        s.disabled = True
+
+def enable_sliders():
+    for s in all_sliders:
+        s.disabled = False
 
 def update_m1(s):
     global m1
@@ -138,11 +152,17 @@ def update_impulse(s):
 running = False
 run_btn = button(text = "Run", pos = scene.title_anchor, bind = run)
 
-def run():
-    global running, run_btn
+def run(btn):
+    global running, run_btn, started, b, t_b1, t_b2
     running = not running
+    if not started:
+        b.start()
+        t_b1.start()
+        t_b2.start()
+        started = True
     if running: 
         run_btn.text = "Pause"
+        disable_sliders()
     else:
         run_btn.text = "Run"
 
@@ -152,7 +172,7 @@ split_btn = button(bind=split_rod, text="Split Rod", pos=scene.title_anchor)
 scene.bind('click', split_rod)
 
 def reset_action(btn):
-    global vel, pos, th, L, t, v, b, t_b1, t_b2, running, run_btn, split_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2
+    global vel, pos, th, L, t, v, b, t_b1, t_b2, running, run_btn, split_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2, started
     t = 0
 
     rad = angle * pi / 180
@@ -174,12 +194,15 @@ def reset_action(btn):
     b.stop()
     b.clear()
     b = attach_trail(com, color=color.yellow, radius=0.035, retain=500)
+    b.stop()
     t_b1.stop()
     t_b1.clear()
     t_b1 = attach_trail(b1, color=color.red, radius=0.035, retain=500)
+    t_b1.stop()
     t_b2.stop()
     t_b2.clear()
     t_b2 = attach_trail(b2, color=color.red, radius=0.035, retain=500)
+    t_b2.stop()
     
     running = False
     run_btn.text = "Run"
@@ -194,6 +217,9 @@ def reset_action(btn):
     stop1 = False
     stop2 = False
     
+    started = False
+    enable_sliders()
+    
     #reset graphs
     gd1.data = []
     gc1.data = []
@@ -203,10 +229,10 @@ def reset_action(btn):
     g1.clear()
     
 def split_rod(btn):
-    global rod, b1, b2, t_b1, t_b2, t, v, v1, v2, split_both
+    global rod, b1, b2, t_b1, t_b2, t, v, v1, v2, split_both, started
     
     #If not running
-    if not v:
+    if not v or not started:
         return
     
     #Calculations
@@ -243,6 +269,20 @@ def split_rod(btn):
     
 while True:
     rate(1/dt)
+    
+    if not started:
+        ax = vec(cos(th), sin(th), 0)
+        r1 = m2 * L / (m1 + m2)
+        r2 = m1 * L / (m1 + m2)
+        b1.pos = pos - r1 * ax
+        b2.pos = pos + r2 * ax
+        b1.radius = .5 * sqrt(m1)
+        b2.radius = .5 * sqrt(m2)
+        rod.pos  = b1.pos
+        rod.axis = b2.pos - b1.pos
+        com.pos  = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+        pos = vec(0, max(mag(b1.pos - com.pos), mag(b2.pos - com.pos)), 0)
+        continue
 
     if (not v) or (not running):
         continue
@@ -266,10 +306,6 @@ while True:
             vel = ((b1.pos * m1 + b2.pos * m2) / (m1 + m2) - com.pos) / dt
             com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
             gc1.plot(t, mag(vel))
-            
-#        com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
-#        if not stop1 and not stop2:
-#            gc1.plot(
         t += dt
         if stop1 and stop2:
             v = False
@@ -277,10 +313,8 @@ while True:
         vel += vec(0, g, 0) * dt
         pos += vel * dt
         th  += w * dt
-
+        
         ax = vec(cos(th), sin(th), 0)
-        r1 = m2 * L / (m1 + m2)
-        r2 = m1 * L / (m1 + m2)
         b1.pos = pos - r1 * ax
         b2.pos = pos + r2 * ax
         rod.pos  = b1.pos
