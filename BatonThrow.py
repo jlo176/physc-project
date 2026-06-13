@@ -51,11 +51,18 @@ t_b2.stop()
 r1 = m2 * L / (m1 + m2)
 r2 = m1 * L / (m1 + m2)
 
-g1 = graph(xtitle = "time (s)", ytitle = "speed (m/s)")
+g1 = graph(xtitle = "time (s)", ytitle = "speed (m/s)", ymax = 0, xmin = 0, ymin = 0)
 gc1 = gcurve(color = color.yellow, label = "COM speed")
 gc2 = gcurve(color = color.black, label = "Mass 2 speed")
 gc3 = gcurve(color = color.red, label = "Mass 1 speed")
 gd1 = gdots(color = color.black, radius = 1)
+
+g2 = graph(xtitle = "time (s)", ytitle = "Kinetic Energy (J)", ymax = 0, xmin = 0, ymin = 0)
+gc_kr = gcurve(color = color.yellow, label = "K rot")
+gc_kt = gcurve(color = color.black, label = "K trans")
+gc_ktot = gcurve(color = color.red, label = "K total")
+gc_ktot_split = gcurve(color = color.red)
+gd2 = gdots(color = color.black, radius = 1)
 
 started = False
 
@@ -83,7 +90,7 @@ angle_slider = slider(min=1.0, max=90.0, value=45, step=1, bind=update_angle)
 angle_text = wtext(text=" 45 degrees")
 
 scene.append_to_caption("\n\n Starting angular speed ")
-w_slider = slider(min=1.0, max=20.0, value=3, step=1, bind=update_angular_speed)
+w_slider = slider(min=1.0, max=20.0, value=3, step=.5, bind=update_angular_speed)
 w_text = wtext(text=" 3.0 rad/s")
 
 scene.append_to_caption("\n\n Starting axis of orientation ")
@@ -131,7 +138,7 @@ def update_angle(s):
 def update_angular_speed(s):
     global w
     w = s.value
-    w_text.text = " {:d} rad/s".format(s.value)
+    w_text.text = " {:.1f} rad/s".format(s.value)
     
 def update_th(s):
     global th
@@ -171,8 +178,11 @@ split_btn = button(bind=split_rod, text="Split Rod", pos=scene.title_anchor)
 
 scene.bind('click', split_rod)
 
+def clear(graph):
+    graph.clear()
+
 def reset_action(btn):
-    global vel, pos, th, L, t, v, b, t_b1, t_b2, running, run_btn, split_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2, started
+    global vel, g2, pos, th, L, t, v, b, t_b1, t_b2, running, run_btn, split_btn, angle, rad, th_slider, split_both, v1, v2, stop1, stop2, started
     t = 0
 
     rad = angle * pi / 180
@@ -221,19 +231,28 @@ def reset_action(btn):
     enable_sliders()
     
     #reset graphs
+    gd2.data = []
+    gc_kr.data = []
+    gc_kt.data = []
+    gc_ktot.data = []
+    gc_ktot_split.data = []
+    g2.ymax = None
+    clear(g2)
+    
     gd1.data = []
     gc1.data = []
     gc2.data = []
     gc3.data = []
     g1.ymax = None
-    g1.clear()
+    g1.select()
+    clear(g1)
     
 def split_rod(btn):
     global rod, b1, b2, t_b1, t_b2, t, v, v1, v2, split_both, started
     
-    #If not running
-    if not v or not started:
+    if not v or not started or split_both:
         return
+    
     
     #Calculations
     tang = vec(-sin(th), cos(th), 0)
@@ -262,9 +281,15 @@ def split_rod(btn):
     #split graph indicator
     g1.select()
     i = 0
-    while i < g1.ymax + 10:
+    while i < 2000:
         gd1.plot(t, i)
-        i += .8
+        i += 1
+        
+    g2.select()
+    i = 0
+    while i < 2000:
+        gd2.plot(t, i)
+        i += 2
 
     
 while True:
@@ -291,6 +316,7 @@ while True:
         if not stop1:
             v1 += vec(0, g, 0) * dt
             b1.pos += v1 * dt
+            g1.select()
             gc3.plot(t, mag(v1))
             g1.ymax = max(mag(v1), g1.ymax)
             if b1.pos.y <= 0:
@@ -298,6 +324,7 @@ while True:
         if not stop2:
             v2 += vec(0, g, 0) * dt
             b2.pos += v2 * dt
+            g1.select()
             gc2.plot(t, mag(v2))
             g1.ymax = max(mag(v2), g1.ymax)
             if b2.pos.y <= 0:
@@ -305,7 +332,12 @@ while True:
         if not stop1 and not stop2:
             vel = ((b1.pos * m1 + b2.pos * m2) / (m1 + m2) - com.pos) / dt
             com.pos = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
+            g1.select()
             gc1.plot(t, mag(vel))
+            g2.select()
+            K = .5 * (m1 * mag(v1) ** 2 + m2 * mag(v2) ** 2)
+            gc_ktot_split.plot(t, K)
+            g2.ymax = max(g2.ymax, K + 10)
         t += dt
         if stop1 and stop2:
             v = False
@@ -321,11 +353,19 @@ while True:
         rod.axis = b2.pos - b1.pos
         com.pos  = (b1.pos * m1 + b2.pos * m2) / (m1 + m2)
         
+        g1.select()
         gc1.plot(t, mag(vel))
         tang = vec(-sin(th), cos(th), 0)
         gc2.plot(t, mag(vel + (w * r2) * tang)) 
         gc3.plot(t, mag(vel + (-w * r1) * tang))
         g1.ymax = max(max(mag(vel + (w * r2) * tang), mag(vel + (-w * r1) * tang)) + 3, g1.ymax)
+        
+        g2.select()
+        kr = .5 * m1 * r1 + m2 * r2 * w * w
+        gc_kr.plot(t, kr)
+        kt = .5 * (m1 * (mag(vel + (-w * r1) * tang) ** 2) + m2 * (mag(vel + (w * r2) * tang) ** 2))
+        gc_ktot.plot(t, kr + kt)
+        g2.ymax = max(g2.ymax, kr + kt + 10)
         
         t += dt
 
