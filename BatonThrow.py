@@ -361,9 +361,9 @@ while True:
         g1.ymax = max(max(mag(vel + (w * r2) * tang), mag(vel + (-w * r1) * tang)) + 3, g1.ymax)
         
         g2.select()
-        kr = .5 * m1 * r1 + m2 * r2 * w * w
+        kr = 0.5 * (m1 * r1**2 + m2 * r2**2) * w**2        
         gc_kr.plot(t, kr)
-        kt = .5 * (m1 * (mag(vel + (-w * r1) * tang) ** 2) + m2 * (mag(vel + (w * r2) * tang) ** 2))
+        kt = 0.5 * (m1 + m2) * mag(vel)**2        
         gc_ktot.plot(t, kr + kt)
         g2.ymax = max(g2.ymax, kr + kt + 10)
         
